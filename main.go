@@ -28,7 +28,7 @@ func genKey() error {
 
 	privateFile, err := os.Create("private.pem")
 	if err != nil {
-		return err
+		return fmt.Errorf("creating private file: %w", err)
 	}
 	defer privateFile.Close()
 
@@ -40,6 +40,28 @@ func genKey() error {
 	if err := pem.Encode(privateFile, &privateBlock); err != nil {
 		return fmt.Errorf("encoding to private file: %w", err)
 	}
+
+	pkixBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return fmt.Errorf("marshaling public key: %w", err)
+	}
+
+	publicFile, err := os.Create("public.pem")
+	if err != nil {
+		return fmt.Errorf("creating public file: %w", err)
+	}
+	defer publicFile.Close()
+
+	publicBlock := pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: pkixBytes,
+	}
+
+	if err := pem.Encode(publicFile, &publicBlock); err != nil {
+		return fmt.Errorf("encoding to public file: %w", err)
+	}
+
+	fmt.Println("private and public key files generated")
 
 	return nil
 }
